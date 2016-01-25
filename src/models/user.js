@@ -30,11 +30,10 @@ module.exports = function(app) {
         },
         toSecureJSON: function() {
             return _.omit(this.toJSON(), ['password', 'password_hash']);
-        }
+        },
     }, {
         login: Promise.method(function(email, password) {
             if (!email || !password) throw new Error('Email and password are both required');
-
             return new User({ email: email.toLowerCase().trim() }).fetch({ required: true }).then(function(user) {
                 debug("User logging in: %j", user);
                 return Promise.promisify(bcrypt.compare)(password, user.get('password_hash'));

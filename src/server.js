@@ -9,8 +9,7 @@ var app = function(options) {
         cookieParser   = require('cookie-parser'),
         morgan         = require('morgan'),
         expressSession = require('express-session'),
-        bcrypt         = require('bcrypt'),
-        knex;
+        bcrypt         = require('bcrypt');
 
     var app = express();
 
@@ -27,7 +26,7 @@ var app = function(options) {
         }
     };
 
-    knex = require('knex')(config);
+    var knex = require('knex')(config);
 
     var bookshelf = require('bookshelf')(knex);
     bookshelf.plugin('registry');
@@ -47,6 +46,9 @@ var app = function(options) {
     app.use(passport.initialize());
     app.use(passport.session());
     app.set('passport', passport);
+
+    app.set('views', './views');
+    app.set('view engine', 'jade');
 
     require('passport-init')(passport, require('models/user')(app));
 
