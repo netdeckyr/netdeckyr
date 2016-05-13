@@ -2,6 +2,7 @@ var gulp    = require('gulp-help')(require('gulp')),
     gutil   = require('gulp-util'),
     yargs   = require('yargs'),
     path    = require('path'),
+    _       = require('lodash'),
     chai    = require('chai');
 
 
@@ -10,7 +11,7 @@ gulp.task('build', 'Build the application.', function() {
     .usage('Usage: $0 build').argv;
 });
 
-gulp.task('test', 'Build and tests the application.', ['build'], function() {
+gulp.task('test', 'Build, migrate, and test the application.', ['build'], function() {
     var args = yargs.reset()
     .usage('Usage: $0 test [options]')
     .option('reporter', {
@@ -61,9 +62,16 @@ gulp.task('migrate', 'Run or create DB migrations.', function() {
         });
     } else {
         // Run latest database migrations as default command.
-        gutil.log('Running migrations...');
-
-        return knex.migrate.latest();
+        return knex.migrate.latest().tap(function(migrations) {
+            _.each(migrations[1], function(migration) {
+                gutil.log(gutil.colors.yellow('Running migration: ' + path.basename(migration)));
+            });
+        }).then(function() {
+            knex.destroy();
+        }).catch(function(error) {
+            gutil.log(error, gutil.colors.red);
+            knex.destroy();
+        });
     }
 }, {
     aliases: ['m', 'M'],
@@ -92,4 +100,4 @@ gulp.task('run', 'Build, migrate, and run the application.', ['build', 'migrate'
     options: {
         'squelch': 'Squelch request logging.'
     }
-})
+});
