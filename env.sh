@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "Setting up environment for Netdeckyr."
 if [ -z "$1" ]; then
     FILE="secret.sh"
 else
