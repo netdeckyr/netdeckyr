@@ -1,38 +1,77 @@
 var gulp    = require('gulp-help')(require('gulp')),
     gutil   = require('gulp-util'),
+    genv    = require('gulp-env'),
     yargs   = require('yargs'),
     path    = require('path'),
     _       = require('lodash'),
     chai    = require('chai');
 
+// Constants
 
-gulp.task('build', 'Build the application.', function() {
-    var args = yargs.reset()
-    .usage('Usage: $0 build').argv;
-});
+const defaultConfigFile = "env.js";
+const defaultSecretFile = "secret.js";
 
-gulp.task('test', 'Build, migrate, and test the application.', ['build'], function() {
+// Helpers
+
+function getConfigurationFilename(config) {
+    var result;
+    if (path.extname(config) != "") {
+        result = config;
+    } else {
+        result = path.format({
+            name: config,
+            ext: '.json'
+        });
+    }
+    return result;
+}
+
+function setupEnvironment() {
     var args = yargs.reset()
-    .usage('Usage: $0 test [options]')
-    .option('reporter', {
-        alias: 'r',
+    .usage('Usage: $0 env [options]')
+    .option('config', {
+        alias: 'c',
         demand: false,
-        describe: '[type] Set the test reporter type.',
-        choices: ['nyan'],
+        describe: '[file] Set the deployment config file.',
+        type: 'string',
+        requiresArg: true
+    })
+    .option('secret', {
+        alias: 's',
+        demand: false,
+        describe: '[file] Set the secret config file.',
         type: 'string',
         requiresArg: true
     }).argv;
 
-    // TODO: Implement test runner
-    return "";
-}, {
-    aliases: ['b', 'B'],
-    options: {
-        'reporter': '[type] Set the test reporter type. Must be one of nyan|cheddar.'
+    var configFile;
+    if (args.config) {
+        configFile = getConfigurationFilename(args.config);
+    } else {
+        configFile = defaultConfigFile;
     }
+
+    var secretFile
+    if (args.secret) {
+        secretFile = getConfigurationFilename(args.secret);
+    } else {
+        secretFile = defaultSecretFile;
+    }
+
+    genv({ file: configFile });
+    genv({ file: secretFile });
+}
+
+// Tasks
+
+gulp.task('build', 'Build the application.', function() {
+    setupEnvironment();
+    var args = yargs.reset()
+    .usage('Usage: $0 build').argv;
 });
 
 gulp.task('migrate', 'Run or create DB migrations.', function() {
+    setupEnvironment();
     var app  = require('app')({ squelch: true });
     var knex = app.get('bookshelf').knex;
 
@@ -80,7 +119,41 @@ gulp.task('migrate', 'Run or create DB migrations.', function() {
     }
 });
 
+gulp.task('tags', 'Build ctags for the application.', function() {
+    setupEnvironment();
+    var ctags = require('gulp-ctags');
+
+    return gulp.src('./**/*.js')
+               .pipe(ctags({ name: process.env.APPNAME + '.tags' }))
+               .pipe(gulp.dest('.'));
+}, {
+    aliases: ['g', 'G']
+});
+
+gulp.task('test', 'Build, migrate, and test the application.', ['build'], function() {
+    setupEnvironment();
+    var args = yargs.reset()
+    .usage('Usage: $0 test [options]')
+    .option('reporter', {
+        alias: 'r',
+        demand: false,
+        describe: '[type] Set the test reporter type.',
+        choices: ['nyan'],
+        type: 'string',
+        requiresArg: true
+    }).argv;
+
+    // TODO: Implement test runner
+    return "";
+}, {
+    aliases: ['b', 'B'],
+    options: {
+        'reporter': '[type] Set the test reporter type. Must be one of nyan|cheddar.'
+    }
+});
+
 gulp.task('run', 'Build, migrate, and run the application.', ['build', 'migrate'], function() {
+    setupEnvironment();
     var args = yargs.reset()
     .usage('Usage: $0 run [options]')
     .option('squelch', {

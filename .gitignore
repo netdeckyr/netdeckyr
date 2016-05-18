@@ -26,6 +26,18 @@ build/Release
 # https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
 node_modules
 
+# SQLite3 database
 *.sqlite3
 
-secret.sh
+# Secret files
+secret.*
+
+# Atom project local settings file
+.atomrc.cson
+
+# Environments folder
+env
+
+# Tags file
+*.tags
+tags
