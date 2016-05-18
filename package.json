@@ -19,7 +19,7 @@
     "gulp": "^3.9.1",
     "gulp-env": "^0.4.0",
     "gulp-help": "^1.6.1",
-    "gulp-ctags": "^0.1.0",
+    "gulp-javascript-ctags": "^1.0.0",
     "gulp-jsdoc3": "^0.2.1",
     "gulp-jshint": "^1.12.0",
     "gulp-shell": "^0.5.1",

@@ -28,16 +28,13 @@ function getConfigurationFilename(config) {
 
 function setupEnvironment() {
     var args = yargs.reset()
-    .usage('Usage: $0 env [options]')
     .option('config', {
-        alias: 'c',
         demand: false,
         describe: '[file] Set the deployment config file.',
         type: 'string',
         requiresArg: true
     })
     .option('secret', {
-        alias: 's',
         demand: false,
         describe: '[file] Set the secret config file.',
         type: 'string',
@@ -68,6 +65,8 @@ gulp.task('build', 'Build the application.', function() {
     setupEnvironment();
     var args = yargs.reset()
     .usage('Usage: $0 build').argv;
+}, {
+    aliases: ['b', 'B']
 });
 
 gulp.task('migrate', 'Run or create DB migrations.', function() {
@@ -121,13 +120,28 @@ gulp.task('migrate', 'Run or create DB migrations.', function() {
 
 gulp.task('tags', 'Build ctags for the application.', function() {
     setupEnvironment();
-    var ctags = require('gulp-ctags');
+    var args = yargs.reset()
+    .usage('Usage: $0 tags --tagsfile [tagsfile]')
+    .option('tagsfile', {
+        alias: 't',
+        demand: false,
+        describe: '[file] Tagsfile to save tags.',
+        type: 'string',
+        requiresArg: true
+    }).argv;
 
-    return gulp.src('./**/*.js')
-               .pipe(ctags({ name: process.env.APPNAME + '.tags' }))
-               .pipe(gulp.dest('.'));
+    var ctags = require('gulp-javascript-ctags');
+
+    var tagsfile = args.tagsfile ? args.tagsfile : process.env.APPNAME + '.tags';
+
+    return gulp.src('src/**/*.js')
+               .pipe(ctags(tagsfile))
+               .pipe(gulp.dest('./'));
 }, {
-    aliases: ['g', 'G']
+    aliases: ['g', 'G'],
+    options: {
+        'tagsfile': '[file] Tagsfile to save tags.'
+    }
 });
 
 gulp.task('test', 'Build, migrate, and test the application.', ['build'], function() {
@@ -146,7 +160,7 @@ gulp.task('test', 'Build, migrate, and test the application.', ['build'], functi
     // TODO: Implement test runner
     return "";
 }, {
-    aliases: ['b', 'B'],
+    aliases: ['t', 'T'],
     options: {
         'reporter': '[type] Set the test reporter type. Must be one of nyan|cheddar.'
     }
