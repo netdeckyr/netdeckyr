@@ -3,7 +3,10 @@
 var gulp    = require('gulp-help')(require('gulp')),
     gutil   = require('gulp-util'),
     genv    = require('gulp-env'),
+    gwatch  = require('gulp-watch'),
+    gulpif  = require('gulp-if'),
     through = require('through2'),
+    merge   = require('merge-stream'),
     yargs   = require('yargs'),
     path    = require('path'),
     _       = require('lodash'),
@@ -30,14 +33,14 @@ function setupEnvironment(configFileName) {
     var args = yargs.reset()
     .option('config', {
         demand: false,
-        describe: '[file] Set the deployment config file.',
+        describe: '[filename] Set the configuration file to use in the env directory.',
         type: 'string',
         default: configFileName !== undefined ? configFileName : 'env.js',
         requiresArg: true
     })
     .option('secret', {
         demand: false,
-        describe: '[file] Set the secret config file.',
+        describe: '[filename] Set the secret configuration file to use in the env directory.',
         type: 'string',
         default: 'secret.js',
         requiresArg: true
@@ -50,6 +53,13 @@ function setupEnvironment(configFileName) {
     genv({ file: secretFile });
 }
 
+var logFilesWithMessage = function(message) {
+    return through.obj(function(file, enc, cb) {
+        gutil.log(message + " " + `${gutil.colors.magenta(file.path)}`);
+        cb(null, file);
+    });
+};
+
 // Tasks
 
 gulp.task('lint', 'Lint the codebase.', function() {
@@ -61,41 +71,80 @@ gulp.task('lint', 'Lint the codebase.', function() {
         type: 'boolean'
     }).option('jshint-reporter', {
         demand: false,
-        describe: 'Set the reporter for jshint.',
+        describe: '[reporter] Set the reporter for jshint.',
         default: 'jshint-stylish',
         type: 'string',
         requiresArg: true
+    }).option('sass-lint-reporter', {
+        demand: false,
+        describe: '[reporter] Set the reporter for sass-lint.',
+        default: 'stylish',
+        type: 'string',
+        requiresArg: true
     }).argv;
-    var jshint = require('gulp-jshint');
 
-    gutil.log(`Using reporter: ${gutil.colors.cyan(args.jshintReporter)}`);
+    var jshint = require('gulp-jshint');
+    var slint  = require('gulp-sass-lint');
+
+    gutil.log(`Using jshint reporter: ${gutil.colors.cyan(args.jshintReporter)}`);
+    gutil.log(`Using sass-lint reporter: ${gutil.colors.cyan(args.sassLintReporter)}`);
 
     // Lint the src and test directories by default.
-    var files = ['src/**/*.js', 'test/**/*.js'];
+    var jsFiles = ['src/**/*.js', 'test/**/*.js'];
 
     if (args.lintTools) {
         // Lint the root directory (therefore all tooling code - gulp, knex, etc.)
         // and migrations directory.
-        files.push('*.js');
-        files.push('migrations/**/*.js');
+        jsFiles.push('*.js');
+        jsFiles.push('migrations/**/*.js');
     }
 
-    return gulp.src(files)
-    .pipe(through.obj(function(file, enc, cb) {
-        gutil.log(`Linting file: ${gutil.colors.magenta(file.path)}`);
-        cb(null, file);
-    }))
+    var jshintStream = gulp.src(jsFiles)
+    .pipe(logFilesWithMessage('Linting file:'))
     .pipe(jshint())
     .pipe(jshint.reporter(args.jshintReporter));
+
+    var sassStream = gulp.src(['src/assets/stylesheets/**/*.scss'])
+    .pipe(logFilesWithMessage('Linting file:'))
+    .pipe(slint())
+    .pipe(slint.format())
+    .pipe(slint.failOnError());
+
+    return merge(jshintStream, sassStream);
 }, {
     aliases: ['l', 'L'],
     options: {
         'lint-tools': 'Lint both the application source code and tooling source code.',
-        'jshint-reporter': 'Set the reporter for jshint.'
+        'jshint-reporter': '[reporter] Set the reporter for jshint.',
+        'sass-lint-reporter': '[reporter] Set the reporter for sass-lint.'
     }
 });
 
-gulp.task('build', 'Build the application.', ['lint'], function() {
+gulp.task('sass', 'Compile the application sass files to the deployment public css directory.', function() {
+    setupEnvironment();
+    var args = yargs.reset()
+    .option('watch', {
+        demand: false,
+        describe: 'Run as a daemon',
+        type: 'boolean'
+    }).argv;
+
+    var sass = require('gulp-sass');
+
+    gutil.log('Compiling sass files...');
+
+    return gulp.src('src/assets/**/*.scss')
+    .pipe(gulpif(args.watch, gwatch('src/assets/**/*.scss')))
+    .pipe(sass().on('error', sass.logError))
+    .pipe(gulp.dest(path.join(process.env.DEPLOYMENT_DIRECTORY, 'public', 'css')));
+}, {
+    options: {
+        'config': '[filename] Set the configuration file to use in the env directory.',
+        'watch': 'Run as a daemon.'
+    }
+});
+
+gulp.task('build', 'Build the application.', ['lint', 'sass'], function() {
     setupEnvironment();
     var args = yargs.reset()
     .usage('Usage: $0 build')
@@ -105,7 +154,6 @@ gulp.task('build', 'Build the application.', ['lint'], function() {
     aliases: ['b', 'B'],
     options: {
         'config': '[filename] Set the configuration file to use in the env directory.',
-        'secret': '[filename] Set the secret configuration file to use in the env directory.'
     }
 });
 
@@ -163,7 +211,6 @@ gulp.task('migrate', 'Run or create DB migrations.', function() {
     options: {
         'create': '[name] Create a migration with the specified name.',
         'config': '[filename] Set the configuration file to use in the env directory.',
-        'secret': '[filename] Set the secret configuration file to use in the env directory.'
     }
 });
 
@@ -211,7 +258,9 @@ gulp.task('test', 'Build, migrate, and test the application.', ['build', 'migrat
 }, {
     aliases: ['t', 'T'],
     options: {
-        'tests-reporter': '[type] Set the test reporter type. Must be one of nyan|cheddar.'
+        'tests-reporter': '[type] Set the test reporter type.',
+        'config': '[filename] Set the configuration file to use in the env directory.',
+        'secret': '[filename] Set the secret configuration file to use in the env directory.'
     }
 });
 
@@ -234,6 +283,8 @@ gulp.task('run', 'Build, migrate, and run the application.', ['build', 'migrate'
 }, {
     aliases: ['r', 'R', 'server', 's', 'S'],
     options: {
-        'squelch': 'Squelch request logging.'
+        'squelch': 'Squelch request logging.',
+        'config': '[filename] Set the configuration file to use in the env directory.',
+        'secret': '[filename] Set the secret configuration file to use in the env directory.'
     }
 });

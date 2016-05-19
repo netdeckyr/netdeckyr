@@ -8,5 +8,6 @@ module.exports = {
     DB_USERNAME: "netdeckyr",
     APPNAME: "netdeckyr",
     CONFIGURATION_ENV: "development",
-    NETDECKYR_PORT: 4545
+    NETDECKYR_PORT: 4545,
+    DEPLOYMENT_DIRECTORY: path.join(__dirname, "site")
 }

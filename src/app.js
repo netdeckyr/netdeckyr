@@ -43,14 +43,20 @@ var app = function(options) {
         resave: true,
         saveUninitialized: true
     }));
+
+    // Setup passport
     app.use(passport.initialize());
     app.use(passport.session());
     app.set('passport', passport);
+    require('passport-init')(passport, require('models/user')(app));
 
-    app.set('views', './views');
+    // Setup views
+    app.set('views', path.join(__dirname, 'views'));
     app.set('view engine', 'jade');
 
-    require('passport-init')(passport, require('models/user')(app));
+    // Setup static files
+    app.use(express.static(path.join(process.env.DEPLOYMENT_DIRECTORY, 'public')));
+
 
     // Require routes
     require('routes')(app, express);
