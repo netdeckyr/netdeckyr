@@ -1,38 +1,123 @@
+/* jshint esversion: 6 */
+
 var gulp    = require('gulp-help')(require('gulp')),
     gutil   = require('gulp-util'),
+    genv    = require('gulp-env'),
+    through = require('through2'),
     yargs   = require('yargs'),
     path    = require('path'),
     _       = require('lodash'),
     chai    = require('chai');
 
+// Helpers
 
-gulp.task('build', 'Build the application.', function() {
-    var args = yargs.reset()
-    .usage('Usage: $0 build').argv;
-});
+function getConfigurationFilename(config) {
+    const environmentDirectory = 'env';
+    var result;
+    if (path.extname(config) !== '') {
+        result = config;
+    } else {
+        result = path.format({
+            name: config,
+            ext: '.json'
+        });
+    }
+    result = path.join(environmentDirectory, result);
+    return result;
+}
 
-gulp.task('test', 'Build, migrate, and test the application.', ['build'], function() {
+function setupEnvironment(configFileName) {
     var args = yargs.reset()
-    .usage('Usage: $0 test [options]')
-    .option('reporter', {
-        alias: 'r',
+    .option('config', {
         demand: false,
-        describe: '[type] Set the test reporter type.',
-        choices: ['nyan'],
+        describe: '[file] Set the deployment config file.',
         type: 'string',
+        default: configFileName !== undefined ? configFileName : 'env.js',
+        requiresArg: true
+    })
+    .option('secret', {
+        demand: false,
+        describe: '[file] Set the secret config file.',
+        type: 'string',
+        default: 'secret.js',
         requiresArg: true
     }).argv;
 
-    // TODO: Implement test runner
-    return "";
+    var configFile = getConfigurationFilename(args.config);
+    var secretFile = getConfigurationFilename(args.secret);
+
+    genv({ file: configFile });
+    genv({ file: secretFile });
+}
+
+// Tasks
+
+gulp.task('lint', 'Lint the codebase.', function() {
+    var args = yargs.reset()
+    .usage('Usage: $0 lint [options]')
+    .option('lint-tools', {
+        demand: false,
+        describe: 'Lint both the application source code and tooling source code.',
+        type: 'boolean'
+    }).option('jshint-reporter', {
+        demand: false,
+        describe: 'Set the reporter for jshint.',
+        default: 'jshint-stylish',
+        type: 'string',
+        requiresArg: true
+    }).argv;
+    var jshint = require('gulp-jshint');
+
+    gutil.log(`Using reporter: ${gutil.colors.cyan(args.jshintReporter)}`);
+
+    // Lint the src and test directories by default.
+    var files = ['src/**/*.js', 'test/**/*.js'];
+
+    if (args.lintTools) {
+        // Lint the root directory (therefore all tooling code - gulp, knex, etc.)
+        // and migrations directory.
+        files.push('*.js');
+        files.push('migrations/**/*.js');
+    }
+
+    return gulp.src(files)
+    .pipe(through.obj(function(file, enc, cb) {
+        gutil.log(`Linting file: ${gutil.colors.magenta(file.path)}`);
+        cb(null, file);
+    }))
+    .pipe(jshint())
+    .pipe(jshint.reporter(args.jshintReporter));
 }, {
-    aliases: ['b', 'B'],
+    aliases: ['l', 'L'],
     options: {
-        'reporter': '[type] Set the test reporter type. Must be one of nyan|cheddar.'
+        'lint-tools': 'Lint both the application source code and tooling source code.',
+        'jshint-reporter': 'Set the reporter for jshint.'
     }
 });
 
+gulp.task('build', 'Build the application.', ['lint'], function() {
+    setupEnvironment();
+    var args = yargs.reset()
+    .usage('Usage: $0 build')
+    .argv;
+
+}, {
+    aliases: ['b', 'B'],
+    options: {
+        'config': '[filename] Set the configuration file to use in the env directory.',
+        'secret': '[filename] Set the secret configuration file to use in the env directory.'
+    }
+});
+
+gulp.task('doc', 'Generate documentation for the application.', function() {
+    // TODO: Implement
+    gutil.log(gutil.colors.yellow("Warning: Task not implemented."));
+}, {
+    aliases: ['d', 'D']
+});
+
 gulp.task('migrate', 'Run or create DB migrations.', function() {
+    setupEnvironment();
     var app  = require('app')({ squelch: true });
     var knex = app.get('bookshelf').knex;
 
@@ -76,11 +161,62 @@ gulp.task('migrate', 'Run or create DB migrations.', function() {
 }, {
     aliases: ['m', 'M'],
     options: {
-        'create': '[name] Create a migration with the specified name.'
+        'create': '[name] Create a migration with the specified name.',
+        'config': '[filename] Set the configuration file to use in the env directory.',
+        'secret': '[filename] Set the secret configuration file to use in the env directory.'
+    }
+});
+
+gulp.task('tags', 'Build ctags for the application.', function() {
+    setupEnvironment();
+    var args = yargs.reset()
+    .usage('Usage: $0 tags --tagsfile [tagsfile]')
+    .option('tagsfile', {
+        alias: 't',
+        demand: false,
+        describe: '[file] Tagsfile to save tags.',
+        type: 'string',
+        requiresArg: true
+    }).argv;
+
+    var ctags = require('gulp-javascript-ctags');
+
+    var tagsfile = args.tagsfile ? args.tagsfile : 'tags';
+
+    return gulp.src('src/**/*.js')
+    .pipe(ctags(tagsfile))
+    .pipe(gulp.dest('./'));
+}, {
+    aliases: ['g', 'G'],
+    options: {
+        'tagsfile': '[file] Tagsfile to save tags.'
+    }
+});
+
+gulp.task('test', 'Build, migrate, and test the application.', ['build', 'migrate'], function() {
+    setupEnvironment();
+    var args = yargs.reset()
+    .usage('Usage: $0 test [options]')
+    .option('tests-reporter', {
+        alias: 'r',
+        demand: false,
+        describe: '[type] Set the test reporter type.',
+        choices: ['nyan'],
+        type: 'string',
+        requiresArg: true
+    }).argv;
+
+    // TODO: Implement test runner
+    return "";
+}, {
+    aliases: ['t', 'T'],
+    options: {
+        'tests-reporter': '[type] Set the test reporter type. Must be one of nyan|cheddar.'
     }
 });
 
 gulp.task('run', 'Build, migrate, and run the application.', ['build', 'migrate'], function() {
+    setupEnvironment();
     var args = yargs.reset()
     .usage('Usage: $0 run [options]')
     .option('squelch', {
