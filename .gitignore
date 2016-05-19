@@ -35,9 +35,6 @@ secret.*
 # Atom project local settings file
 .atomrc.cson
 
-# Environments folder
-env
-
 # Tags file
 *.tags
 tags
