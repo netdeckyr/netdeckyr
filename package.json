@@ -5,7 +5,7 @@
   "repository": "https://github.com/netdeckyr/netdeckyr.git",
   "main": "src/app.js",
   "scripts": {
-    "test": "gulp test"
+    "test": "gulp test --config test"
   },
   "keywords": [
     "website",
@@ -25,11 +25,12 @@
     "gulp-shell": "^0.5.1",
     "gulp-util": "^3.0.7",
     "jsdoc": "^3.4.0",
-    "jshint-stylish": "^2.0.1",
+    "jshint-stylish": "^2.2.0",
     "mocha": "^2.3.3",
     "morgan": "^1.7.0",
     "request": "^2.65.0",
     "sqlite3": "^3.1.1",
+    "through2": "^2.0.1",
     "yargs": "^4.7.0"
   },
   "dependencies": {
