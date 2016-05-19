@@ -39,3 +39,6 @@ secret.*
 *.tags
 tags
 -
+
+# Site directory
+site

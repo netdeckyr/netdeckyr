@@ -133,8 +133,8 @@ gulp.task('sass', 'Compile the application sass files to the deployment public c
 
     gutil.log('Compiling sass files...');
 
-    return gulp.src('src/assets/**/*.scss')
-    .pipe(gulpif(args.watch, gwatch('src/assets/**/*.scss')))
+    return gulp.src('src/assets/stylesheets/**/*.scss')
+    .pipe(gulpif(args.watch, gwatch('src/assets/stylesheets/**/*.scss')))
     .pipe(sass().on('error', sass.logError))
     .pipe(gulp.dest(path.join(process.env.DEPLOYMENT_DIRECTORY, 'public', 'css')));
 }, {
