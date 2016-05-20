@@ -1,0 +1,25 @@
+{
+  "name": "netdeckyr",
+  "description": "Deck repository and community site for the Duelyst card game.",
+  "main": "src/assets/scripts/netdeckyr.js",
+  "authors": [
+    "Brendon Roberto"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "website",
+    "duelyst"
+  ],
+  "homepage": "https://github.com/netdeckyr/netdeckyr",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "foundation-sites": "^6.2.1"
+  }
+}

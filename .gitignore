@@ -22,9 +22,10 @@ coverage
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
 
-# Dependency directory
+# Dependency directories
 # https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
 node_modules
+bower_components
 
 # SQLite3 database
 *.sqlite3
@@ -42,3 +43,4 @@ tags
 
 # Site directory
 site
+

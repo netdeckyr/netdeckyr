@@ -144,16 +144,39 @@ gulp.task('sass', 'Compile the application sass files to the deployment public c
     }
 });
 
-gulp.task('build', 'Build the application.', ['lint', 'sass'], function() {
+gulp.task('bower', 'Run bower commands.', function() {
+    var args = yargs.reset()
+    .usage('Usage: $0 ')
+    .option('bower-command', {
+        demand: false,
+        describe: '[command] Bower command to run.',
+        default: 'install',
+        type: 'string',
+        requiresArg: true
+    }).argv;
+
+    var gbower = require('gulp-bower');
+
+    return gbower({ cmd: args.bowerCommand });
+}, {
+    options: {
+        'bower-command': '[command] Bower command to run.'
+    }
+});
+
+gulp.task('build', 'Build the application.', ['lint', 'bower', 'sass'], function() {
     setupEnvironment();
     var args = yargs.reset()
-    .usage('Usage: $0 build')
+    .usage('Usage: $0 build [options]')
     .argv;
 
+
+    return gbower()
+    .pipe(gulp.dest(args.bowerCommand))
 }, {
     aliases: ['b', 'B'],
     options: {
-        'config': '[filename] Set the configuration file to use in the env directory.',
+        'config': '[filename] Set the configuration file to use in the env directory.'
     }
 });
 
