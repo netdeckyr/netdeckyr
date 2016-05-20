@@ -189,7 +189,7 @@ gulp.task('doc', 'Generate documentation for the application.', function() {
 
 gulp.task('migrate', 'Run or create DB migrations.', function() {
     setupEnvironment();
-    var app  = require('app')({ squelch: true });
+    var app  = require('netdeckyr')({ squelch: true });
     var knex = app.get('bookshelf').knex;
 
     // Set CLI options using yargs.
