@@ -1,17 +1,17 @@
 /* jshint esversion: 6 */
 
-var gulp    = require('gulp-help')(require('gulp')),
-    gutil   = require('gulp-util'),
-    genv    = require('gulp-env'),
-    gwatch  = require('gulp-watch'),
-    gulpif  = require('gulp-if'),
-    through = require('through2'),
-    merge   = require('merge-stream'),
-    yargs   = require('yargs'),
-    path    = require('path'),
-    _       = require('lodash'),
-    chai    = require('chai');
-
+const gulp    = require('gulp-help')(require('gulp')),
+      gutil   = require('gulp-util'),
+      genv    = require('gulp-env'),
+      gwatch  = require('gulp-watch'),
+      gulpif  = require('gulp-if'),
+      through = require('through2'),
+      util    = require('util'),
+      merge   = require('merge-stream'),
+      yargs   = require('yargs'),
+      path    = require('path'),
+      use     = require('rekuire'),
+      _       = require('lodash');
 // Helpers
 
 function getConfigurationFilename(config) {
@@ -49,8 +49,9 @@ function setupEnvironment(configFileName) {
     var configFile = getConfigurationFilename(args.config);
     var secretFile = getConfigurationFilename(args.secret);
 
-    genv({ file: configFile });
     genv({ file: secretFile });
+    genv({ file: configFile });
+    return use(configFile);
 }
 
 var logFilesWithMessage = function(message) {
@@ -90,7 +91,7 @@ gulp.task('lint', 'Lint the codebase.', function() {
     gutil.log(`Using sass-lint reporter: ${gutil.colors.cyan(args.sassLintReporter)}`);
 
     // Lint the src and test directories by default.
-    var jsFiles = ['src/**/*.js', 'test/**/*.js'];
+    var jsFiles = ['src/**/*.js', 'test/**/*.js', '!src/**/bower_components/**/*.js'];
 
     if (args.lintTools) {
         // Lint the root directory (therefore all tooling code - gulp, knex, etc.)
@@ -155,7 +156,7 @@ gulp.task('bower', 'Run bower commands.', function() {
         requiresArg: true
     }).argv;
 
-    var gbower = require('gulp-bower');
+    const gbower = require('gulp-bower');
 
     return gbower({ cmd: args.bowerCommand });
 }, {
@@ -164,15 +165,13 @@ gulp.task('bower', 'Run bower commands.', function() {
     }
 });
 
-gulp.task('build', 'Build the application.', ['lint', 'bower', 'sass'], function() {
+gulp.task('build', 'Build the application.', ['lint', 'bower', 'sass'], function(done) {
     setupEnvironment();
     var args = yargs.reset()
     .usage('Usage: $0 build [options]')
     .argv;
 
-
-    return gbower()
-    .pipe(gulp.dest(args.bowerCommand))
+    done();
 }, {
     aliases: ['b', 'B'],
     options: {
@@ -189,11 +188,9 @@ gulp.task('doc', 'Generate documentation for the application.', function() {
 
 gulp.task('migrate', 'Run or create DB migrations.', function() {
     setupEnvironment();
-    var app  = require('netdeckyr')({ squelch: true });
-    var knex = app.get('bookshelf').knex;
 
     // Set CLI options using yargs.
-    var args = yargs.reset()
+    const args = yargs.reset()
     .usage('Usage: $0 migrate [options]')
     .option('create', {
         alias: 'c',
@@ -202,6 +199,15 @@ gulp.task('migrate', 'Run or create DB migrations.', function() {
         type: 'string',
         requiresArg: true
     }).argv;
+
+    const config = use('knexfile')[process.env.CONFIGURATION_ENV] || {
+        client: 'sqlite3',
+        connection: {
+        filename: './dev.sqlite3'
+        }
+    };
+
+    const knex = require('knex')(config);
 
     if (args.create) {
         gutil.log('Creating migration: ' + args.create);
@@ -264,20 +270,27 @@ gulp.task('tags', 'Build ctags for the application.', function() {
 });
 
 gulp.task('test', 'Build, migrate, and test the application.', ['build', 'migrate'], function() {
-    setupEnvironment();
+    const env = setupEnvironment();
     var args = yargs.reset()
     .usage('Usage: $0 test [options]')
     .option('tests-reporter', {
         alias: 'r',
         demand: false,
         describe: '[type] Set the test reporter type.',
-        choices: ['nyan'],
+        choices: ['nyan', 'spec', 'dot'],
+        default: 'nyan',
         type: 'string',
         requiresArg: true
     }).argv;
 
-    // TODO: Implement test runner
-    return "";
+    gutil.log(`Using environment: ${util.inspect(env)}.`);
+
+    const mocha = require('gulp-spawn-mocha');
+    return gulp.src('test/**/*.js', { read: false })
+    .pipe(mocha({
+        env: env,
+        reporter: args.testsReporter
+    }));
 }, {
     aliases: ['t', 'T'],
     options: {
@@ -302,7 +315,7 @@ gulp.task('run', 'Build, migrate, and run the application.', ['build', 'migrate'
     process.env.NETDECKYR_SQUELCH = args.squelch;
 
     // Start the server.
-    require('server');
+    use('server');
 }, {
     aliases: ['r', 'R', 'server', 's', 'S'],
     options: {

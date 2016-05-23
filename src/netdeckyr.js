@@ -1,4 +1,6 @@
-var app = function(options) {
+/* jshint esversion: 6 */
+
+var netdeckyr = function(options) {
     // Require dependencies
     var express        = require('express'),
         _              = require('lodash'),
@@ -8,18 +10,37 @@ var app = function(options) {
         debug          = require('debug')('development'),
         cookieParser   = require('cookie-parser'),
         morgan         = require('morgan'),
+        winston        = require('winston'),
+        moment         = require('moment'),
+        use            = require('rekuire'),
+        chalk          = require('chalk'),
         expressSession = require('express-session'),
         bcrypt         = require('bcrypt');
 
     var app = express();
 
-    // Set libraries
+    // Save library references
     app.set('underscore', _);
     app.set('debug', debug);
     app.set('bcrypt', bcrypt);
+    app.set('chalk', chalk);
+
+    var winstonTimestamp = function() {
+        return `[${ chalk.gray(moment().format('HH:mm:ss')) }]`;
+    };
+
+    var logger = new (winston.Logger)({
+        transports: [
+            new (winston.transports.Console)({ timestamp: winstonTimestamp, colorize: true })
+            // TODO: Add file logging
+        ]
+    });
+
+    app.set('winston', logger);
 
     // Initialize DB
-    var config = require('knexfile')[process.env.CONFIGURATION_ENV] || {
+    logger.info(`Setting up '${ chalk.cyan('knex') }' with environment ${ process.env.CONFIGURATION_ENV }.`);
+    var config = use('knexfile')[process.env.CONFIGURATION_ENV] || {
         client: 'sqlite3',
         connection: {
         filename: './dev.sqlite3'
@@ -48,7 +69,7 @@ var app = function(options) {
     app.use(passport.initialize());
     app.use(passport.session());
     app.set('passport', passport);
-    require('passport-init')(passport, require('models/user')(app));
+    use('passport-init')(passport, use('models/user')(app));
 
     // Setup views
     app.set('views', path.join(__dirname, 'views'));
@@ -59,10 +80,9 @@ var app = function(options) {
 
 
     // Require routes
-    require('routes')(app, express);
-
+    use('routes')(app, express);
 
     return app;
 };
 
-module.exports = app;
+module.exports = netdeckyr;

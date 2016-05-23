@@ -1,7 +1,10 @@
-var flag = require('node-env-flag');
-var squelch = flag(process.env.NETDECKYR_SQUELCH);
+/* jshint esversion: 6 */
 
-var app = require('netdeckyr')({ squelch: squelch });
+const flag    = require('node-env-flag');
+const use     = require('rekuire');
+const squelch = flag(process.env.NETDECKYR_SQUELCH);
+
+var app = use('netdeckyr')({ squelch: squelch });
 
 // Start server
 var port = process.env.NETDECKYR_PORT || 8000;

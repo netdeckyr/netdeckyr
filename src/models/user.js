@@ -1,3 +1,5 @@
+/* jshint esversion: 6 */
+
 module.exports = function(app) {
     var Promise   = require('bluebird');
     var bookshelf = app.get('bookshelf');
