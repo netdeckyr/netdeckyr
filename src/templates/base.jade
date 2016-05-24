@@ -1,0 +1,36 @@
+doctype 5
+html.no-js(lang='en')
+    head
+        block head
+            meta(charset='utf-8')
+            meta(http-equiv='X-UA-Compatible', content='ID=edge')
+            meta(name='description', content='#{meta.description}')
+            meta(name='viewport', content='width=device-width, initial-scale=1')
+            
+            title= Netdeckyr - #{meta.title}
+        
+        block css
+            link(rel='stylesheet', href='vendor/stylesheets/normalize.css')
+            link(rel='stylesheet', href='vendor/stylesheets/foundation.css')
+            link(rel='stylesheet', href='stylesheets/app.css')
+    body
+        <!--[if lt IE 8]>
+        p.browsehappy
+            | You are using a <strong>outdated</strong> browser.
+            | Please <a href="http://browsehappy.com/">upgrade your browser</a>
+            | to improve your experience.
+        <![endif]-->
+        
+        block navigation
+            include ./partials/_base_navigation.jade
+        
+        block content
+        
+        block footer
+            include ./partials/_base_footer.jade
+        
+        block javascript
+            script(src='vendor/scripts/jquery.min.js')
+            script(src='vendor/scripts/what-input.min.js')
+            script(src='vendor/scripts/foundation.min.js')
+            script(src='scripts/app.js')

@@ -3,7 +3,7 @@
 
 const expect = require('chai').expect;
 const bcrypt = require('bcrypt');
-const use = require('rekuire');
+const use    = require('rekuire');
 const app    = use('netdeckyr')();
 const User   = use('user')(app);
 

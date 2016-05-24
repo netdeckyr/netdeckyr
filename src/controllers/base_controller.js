@@ -1,0 +1,3 @@
+var BaseController = function(app) {
+
+};

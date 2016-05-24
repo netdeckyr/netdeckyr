@@ -165,13 +165,25 @@ gulp.task('bower', 'Run bower commands.', function() {
     }
 });
 
-gulp.task('build', 'Build the application.', ['lint', 'bower', 'sass'], function(done) {
+gulp.task('build', 'Build the application.', ['lint', 'bower', 'sass'], function() {
     setupEnvironment();
     var args = yargs.reset()
     .usage('Usage: $0 build [options]')
     .argv;
 
-    done();
+    const uglify = require('gulp-uglify');
+
+    var appStream = gulp.src('src/assets/scripts/**/*.js')
+    .pipe(logFilesWithMessage('Compressing file:'))
+    .pipe(uglify())
+    .pipe(gulp.dest(path.join(process.env.DEPLOYMENT_DIRECTORY, 'public', 'scripts')));
+
+    var vendorStream = gulp.src(['src/assets/vendor/bower_components/**/*.js', '!src/assets/vendor/bower_components/**/gulpfile.js'])
+    .pipe(logFilesWithMessage('Compressing file:'))
+    .pipe(uglify())
+    .pipe(gulp.dest(path.join(process.env.DEPLOYMENT_DIRECTORY, 'public', 'scripts', 'vendor')));
+
+    return merge(appStream, vendorStream);
 }, {
     aliases: ['b', 'B'],
     options: {
@@ -283,12 +295,9 @@ gulp.task('test', 'Build, migrate, and test the application.', ['build', 'migrat
         requiresArg: true
     }).argv;
 
-    gutil.log(`Using environment: ${util.inspect(env)}.`);
-
     const mocha = require('gulp-spawn-mocha');
     return gulp.src('test/**/*.js', { read: false })
     .pipe(mocha({
-        env: env,
         reporter: args.testsReporter
     }));
 }, {
