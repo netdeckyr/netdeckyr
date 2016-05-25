@@ -13,9 +13,8 @@ const chai      = require('chai'),
 chai.use(dirtyChai);
 chai.use(sinonChai);
 
-const app       = use('netdeckyr')({ squelch: true });
-const Router    = use('router')(app, express);
-
+const app = use('netdeckyr')({ squelch: true });
+/*
 describe('Router', function() {
     describe('#constructor', function() {
         it('should have a constructor that takes a single argument (controller) and returns an enhanced express router.', function(done) {
@@ -49,3 +48,4 @@ describe('Router', function() {
         });
     });
 });
+*/
