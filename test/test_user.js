@@ -1,11 +1,13 @@
 /* jshint esversion: 6 */
 /* jshint expr: true */
 
-const expect = require('chai').expect;
-const bcrypt = require('bcrypt');
-const use    = require('rekuire');
-const app    = use('netdeckyr')();
-const User   = use('user')(app);
+const chai      = require('chai');
+const dirtyChai = require('dirty-chai');
+const expect    = chai.expect;
+const bcrypt    = require('bcrypt');
+const use       = require('rekuire');
+const app       = use('netdeckyr')();
+const User      = use('user')(app);
 
 describe('User', function() {
     beforeEach(function(done) {

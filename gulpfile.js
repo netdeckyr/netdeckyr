@@ -5,6 +5,9 @@ const gulp    = require('gulp-help')(require('gulp')),
       genv    = require('gulp-env'),
       gwatch  = require('gulp-watch'),
       gulpif  = require('gulp-if'),
+      gfilter = require('gulp-filter'),
+      gconcat = require('gulp-concat'),
+      grename = require('gulp-rename'),
       through = require('through2'),
       util    = require('util'),
       merge   = require('merge-stream'),
@@ -171,17 +174,25 @@ gulp.task('build', 'Build the application.', ['lint', 'bower', 'sass'], function
     .usage('Usage: $0 build [options]')
     .argv;
 
-    const uglify = require('gulp-uglify');
+    const bowerFiles = require('gulp-main-bower-files');
+    const uglify     = require('gulp-uglify');
 
+    // Uglify, concat, and compress app files.
     var appStream = gulp.src('src/assets/scripts/**/*.js')
     .pipe(logFilesWithMessage('Compressing file:'))
+    .pipe(gconcat('app.js'))
     .pipe(uglify())
+    .pipe(grename({ dirname: '', basename: 'app', suffix: '.min', extname: '.js' }))
     .pipe(gulp.dest(path.join(process.env.DEPLOYMENT_DIRECTORY, 'public', 'scripts')));
 
-    var vendorStream = gulp.src(['src/assets/vendor/bower_components/**/*.js', '!src/assets/vendor/bower_components/**/gulpfile.js'])
-    .pipe(logFilesWithMessage('Compressing file:'))
+    var vendorStream = gulp.src('./bower.json')
+    .pipe(bowerFiles())
+    .pipe(gfilter(function(file) { return /.+\.js/.test(file.path) }))
+    .pipe(logFilesWithMessage('Compressing vendor file:'))
+    .pipe(gconcat('vendor.js'))
     .pipe(uglify())
-    .pipe(gulp.dest(path.join(process.env.DEPLOYMENT_DIRECTORY, 'public', 'scripts', 'vendor')));
+    .pipe(grename({ dirname: '', basename: 'vendor', suffix: '.min', extname: '.js' }))
+    .pipe(gulp.dest(path.join(process.env.DEPLOYMENT_DIRECTORY, 'public', 'scripts')));
 
     return merge(appStream, vendorStream);
 }, {
@@ -272,6 +283,7 @@ gulp.task('tags', 'Build ctags for the application.', function() {
     var tagsfile = args.tagsfile ? args.tagsfile : 'tags';
 
     return gulp.src('src/**/*.js')
+    .pipe(logFilesWithMessage('Generating tags for file: '))
     .pipe(ctags(tagsfile))
     .pipe(gulp.dest('./'));
 }, {
@@ -290,7 +302,7 @@ gulp.task('test', 'Build, migrate, and test the application.', ['build', 'migrat
         demand: false,
         describe: '[type] Set the test reporter type.',
         choices: ['nyan', 'spec', 'dot'],
-        default: 'nyan',
+        default: 'spec',
         type: 'string',
         requiresArg: true
     }).argv;
