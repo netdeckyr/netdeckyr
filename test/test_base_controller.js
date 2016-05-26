@@ -13,22 +13,36 @@ const chai      = require('chai'),
 chai.use(dirtyChai);
 chai.use(sinonChai);
 
-const app = use('netdeckyr')({ squelch: true });
+const app = express();
 const BaseController = use('base_controller')(app);
+const noop = function() {};
 
 describe('BaseController', function() {
     var TestController;
 
     before(function() {
         TestController = BaseController.extend(function(test) {
-            BaseController.call(this);
+            this._super.call(this);
             this.test = test;
-            this.name = 'test';
-        });
+            this._name = 'test';
+        }, {
+            testMethod: function(request, response) {
+                response.send(this.test);
+            },
 
-        TestController.prototype.testMethod = function(request, response) {
-            response.send(this.test);
-        };
+            testParams: function(request, response) {
+                response.send(request.param);
+            },
+
+            testPostMethod: function(request, response) {
+                reponse.send(request.body);
+            },
+
+            handleTestParam: function(request, response, next, param) {
+                request.param = param;
+                next();
+            }
+        });
     });
 
     describe('#constructor', function() {
@@ -38,9 +52,66 @@ describe('BaseController', function() {
             expect(controller).to.be.instanceof(BaseController);
         });
 
-        it('should have a name property set to \'base\'', function() {
+        it('should have a _name property set to \'base\'', function() {
             const controller = new BaseController();
-            expect(controller).to.have.property('name', 'base');
+            expect(controller).to.have.property('_name', 'base');
+        });
+    });
+
+    describe('#initialize', function() {
+        it('should take in an express.Router and appropriately set up parameters and define routes using the provided bindings', function() {
+            const controller = new TestController();
+            const route = '/test';
+            const testMethodRoute = '/method';
+            const testParamsRoute = '/:param';
+            const testParam = 'param';
+            const router = express.Router();
+
+            // Build bindings
+            let bindings = {};
+            bindings[testMethodRoute] = controller.testMethod;
+            bindings[testParamsRoute] = controller.testParams;
+
+            // Build params
+            let params = {};
+            params[testParam] = controller.handleTestParam;
+
+            controller.initialize(router, bindings, params);
+
+            app.use(route, router);
+
+            return supertest(app).get(route + testMethodRoute)
+            .expect(200)
+            .then(function() {
+                return supertest(app).get(route + '/' + testParam)
+                .expect(200)
+                .expect(testParam);
+            });
+        });
+
+        it('should allow bindings entries to include a dictionary to specify bindings for each HTTP verb', function() {
+            const controller = new TestController();
+            const route = '/test';
+            const testMethodRoute = '/method';
+            const router = express.Router();
+
+            // Build bindings
+            let bindings = {};
+            bindings[testMethodRoute] = {
+                'get': controller.testMethod,
+                'post': controller.testPostMethod
+            };
+
+            controller.initialize(router, bindings);
+
+            app.use(route, router);
+
+            return Promise.all([
+                supertest(app).get(route).expect(404),
+                supertest(app).get(route + testMethodRoute).expect(200),
+                supertest(app).post(route + testMethodRoute).expect(200),
+                supertest(app).delete(route + testMethodRoute).expect(404)
+            ]);
         });
     });
 
@@ -52,13 +123,45 @@ describe('BaseController', function() {
             expect(controller).to.not.be.undefined();
             expect(controller).to.be.instanceof(BaseController);
             expect(controller).to.be.instanceof(TestController);
+            expect(controller).to.have.property('_super', BaseController);
             expect(controller).to.have.property('test', testValue);
-            expect(controller).to.have.property('name', 'test');
-            expect(controller).to.have.property('testMethod');
+            expect(controller).to.have.property('_name', 'test');
+            expect(controller.testMethod).to.not.be.undefined();
+        });
+
+        it('should set up instance and class methods appropriately', function() {
+            const testFnRetVal = 10;
+            const testClassFnRetVal = 20;
+            const MockController = BaseController.extend(function() {
+                this._super.call(this);
+                this.mock = 'mock';
+            }, {
+                mockFn: function(request, response) {
+                    response.send('hello world');
+                },
+                testFn: function() {
+                    return testFnRetVal;
+                }
+            }, {
+                testClassFn: function() {
+                    return testClassFnRetVal;
+                }
+            });
+
+            expect(MockController).to.have.property('_instanceMethods');
+            expect(MockController).to.have.property('_classMethods');
+            expect(MockController._instanceMethods).to.have.length(2);
+            expect(MockController._classMethods).to.have.length(1);
         });
     });
 
     describe('#bindContext', function() {
+        it('should define a bindContext method', function() {
+            const controller = new TestController();
+
+            expect(controller.bindContext).to.not.be.undefined();
+        });
+
         it('should be able to be bound to an express.Router route', function() {
             const testValue = 'testing';
             const controller = new TestController(testValue);
@@ -74,6 +177,28 @@ describe('BaseController', function() {
             .then(function() {
                 expect(handler).to.have.been.called();
             });
+        });
+    });
+
+    describe('#instanceMethods', function() {
+        it('should define an instanceMethods method', function() {
+            const MockController = BaseController.extend(function() {});
+            var controller = new MockController();
+
+            expect(controller.instanceMethods).to.not.be.undefined();
+        });
+
+        it('should return all of the instance methods in the prototype chain', function() {
+            const MockController = BaseController.extend(noop, {
+                testMethod: noop
+            }, {
+
+            });
+
+            const combinedLength = MockController._instanceMethods.length + BaseController._instanceMethods.length;
+
+            var controller = new MockController();
+            expect(controller.instanceMethods()).to.be.length(combinedLength);
         });
     });
 });

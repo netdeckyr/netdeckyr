@@ -67,6 +67,7 @@
     "jade": "^1.11.0",
     "knex": "^0.9.0",
     "lodash": "^4.12.0",
+    "methods": "^1.1.2",
     "moment": "^2.13.0",
     "node-env-flag": "^0.1.0",
     "passport": "^0.3.2",
