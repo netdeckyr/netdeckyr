@@ -6,7 +6,7 @@ const dirtyChai = require('dirty-chai');
 const expect    = chai.expect;
 const bcrypt    = require('bcrypt');
 const use       = require('rekuire');
-const app       = use('netdeckyr')();
+const app       = use('netdeckyr')({ squelch: true });
 const User      = use('user')(app);
 
 describe('User', function() {

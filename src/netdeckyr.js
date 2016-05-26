@@ -15,6 +15,7 @@ var netdeckyr = function(options) {
         use            = require('rekuire'),
         chalk          = require('chalk'),
         expressSession = require('express-session'),
+        RedisStore     = require('connect-redis')(expressSession),
         bcrypt         = require('bcrypt');
 
     var app = express();
@@ -31,7 +32,11 @@ var netdeckyr = function(options) {
 
     var logger = new (winston.Logger)({
         transports: [
-            new (winston.transports.Console)({ timestamp: winstonTimestamp, colorize: true })
+            new (winston.transports.Console)({
+                timestamp: winstonTimestamp,
+                colorize: true,
+                level: (options && options.squelch) ? 'error' : 'info'
+            })
             // TODO: Add file logging
         ]
     });
@@ -59,8 +64,11 @@ var netdeckyr = function(options) {
     if (!options || (options && !options.squelch)) {
         app.use(morgan('dev'));
     }
+
+    let sessionStore = new RedisStore();
     app.use(expressSession({
         secret: process.env.EXPRESS_SECRET_KEY,
+        store: sessionStore,
         resave: true,
         saveUninitialized: true
     }));

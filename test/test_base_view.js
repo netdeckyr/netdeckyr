@@ -9,7 +9,7 @@ const chai      = require('chai'),
 const expect = chai.expect;
 chai.use(dirtyChai);
 
-const app      = use('netdeckyr');
+const app      = use('netdeckyr')({ squelch: true });
 const BaseView = use('base_view')(app);
 
 describe('BaseView', function() {

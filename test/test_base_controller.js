@@ -14,24 +14,65 @@ chai.use(dirtyChai);
 chai.use(sinonChai);
 
 const app = use('netdeckyr')({ squelch: true });
+const BaseController = use('base_controller')(app);
 
-describe('BasicController', function() {
+describe('BaseController', function() {
+    var TestController;
 
-    describe('#constructor', function() {
+    before(function() {
+        TestController = BaseController.extend(function(test) {
+            BaseController.call(this);
+            this.test = test;
+            this.name = 'test';
+        });
+
+        TestController.prototype.testMethod = function(request, response) {
+            response.send(this.test);
+        };
     });
 
-    describe('Interaction with express.Router', function() {
-        it('should be able to be bound to an express.Router route.', function(done) {
-            const mockController = { test: sinon.stub() };
-            const testRoute = '/test';
-            const request = { url: testRoute, method: 'GET' };
-            const response = { end: function() {} };
+    describe('#constructor', function() {
+        it('should return an instance of BaseController', function() {
+            const controller = new BaseController();
+            expect(controller).to.not.be.undefined();
+            expect(controller).to.be.instanceof(BaseController);
+        });
 
-            app.get(testRoute, mockController.test.bind(mockController));
+        it('should have a name property set to \'base\'', function() {
+            const controller = new BaseController();
+            expect(controller).to.have.property('name', 'base');
+        });
+    });
 
-            supertest(app).get(testRoute).then(function() {
-                return expect(mockController.test).to.have.been.calledWith(mockController);
-                done();
+    describe('#extend', function() {
+        it('should return a child extended from BaseController', function() {
+            const testValue = 'testing';
+            var controller = new TestController(testValue);
+
+            expect(controller).to.not.be.undefined();
+            expect(controller).to.be.instanceof(BaseController);
+            expect(controller).to.be.instanceof(TestController);
+            expect(controller).to.have.property('test', testValue);
+            expect(controller).to.have.property('name', 'test');
+            expect(controller).to.have.property('testMethod');
+        });
+    });
+
+    describe('#bindContext', function() {
+        it('should be able to be bound to an express.Router route', function() {
+            const testValue = 'testing';
+            const controller = new TestController(testValue);
+            const route = '/test';
+            let handler = sinon.spy(controller.bindContext(controller.testMethod));
+
+            // Set up the test route
+            app.get(route, handler);
+
+            return supertest(app).get(route)
+            .expect(200)
+            .expect(testValue)
+            .then(function() {
+                expect(handler).to.have.been.called();
             });
         });
     });
