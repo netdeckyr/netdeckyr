@@ -202,9 +202,12 @@ gulp.task('build', 'Build the application.', ['lint', 'bower', 'sass'], function
     }
 });
 
-gulp.task('doc', 'Generate documentation for the application.', function() {
-    // TODO: Implement
-    gutil.log(gutil.colors.yellow("Warning: Task not implemented."));
+gulp.task('doc', 'Generate documentation for the application.', function(cb) {
+      const gjsdoc = require('gulp-jsdoc3');
+
+      gulp.src([ 'README.md', './src/**/*.js', '!src/**/bower_components/**/*.js' ], { read: false })
+      .pipe(logFilesWithMessage('Generating documentation for file: '))
+      .pipe(gjsdoc(cb));
 }, {
     aliases: ['d', 'D']
 });

@@ -2,22 +2,20 @@
 
 /**
  * @module base_controller
- * Provides the BaseController constructor.
+ * @description Provides the {@link module:base_controller~BaseController} class.
  *
  * @requires lodash
  * @requires methods
  */
-
 var base_controller = function(app) {
 
     const _       = require('lodash');
-    const methods = require('methods');
+    const httpMethods = require('methods');
 
     /**
-     * The BaseController constructor returns a new BaseController instance.
-     *
      * @class BaseController
      * @classdesc The base controller. Provides the basic functionality of a controller, including router bindings and basic inheritance.
+     * @description The BaseController constructor returns a new BaseController instance.
      *
      * @property {string} _name - The name of the controller. Should be overriden by subclasses.
      */
@@ -25,14 +23,28 @@ var base_controller = function(app) {
         this._name = "base";
     };
 
+    /**
+     * @member {Array.<Object.<string, function>>} _instanceMethods
+     * @memberof module:base_controller~BaseController
+     * @static
+     * @description The array of instance methods available in the prototype chain, in the format { name: implementation: }
+     */
     BaseController._instanceMethods = [];
+
+    /**
+     * @member {Array.<Object.<string, function>>} _classMethods
+     * @memberof module:base_controller~BaseController
+     * @static
+     * @description The array of class methods available in the prototype chain, in the format { name: implementation: }
+     */
     BaseController._classMethods = [];
 
     /**
-     * The extend method provides a method for inheriting from BaseController.
-     *
-     * @method BaseController.extend
-     * @param child - The constructor function of the inheriting type.
+     * @method extend
+     * @memberof module:base_controller~BaseController
+     * @static
+     * @description The extend method provides a method for inheriting from BaseController.
+     * @param {function} child - The constructor function of the inheriting type.
      * @param {Object.<string, function>} instanceMethods - instance methods to attach to the inheriting type's prototype.
      * @param {Object.<string, function>} classMethods - class methods to attach to the inheriting type.
      *
@@ -44,7 +56,7 @@ var base_controller = function(app) {
             '_super': BaseController
         });
 
-        child._instanceMethods = [];
+        child._instanceMethods = BaseController._instanceMethods.slice();
         if (instanceMethods !== undefined) {
             _.forOwn(instanceMethods, function(implementation, name) {
                 child.prototype[name] = implementation;
@@ -52,7 +64,7 @@ var base_controller = function(app) {
             });
         }
 
-        child._classMethods = [];
+        child._classMethods = BaseController._classMethods.slice();
         if (classMethods !== undefined) {
             _.forOwn(classMethods, function(implementation, name) {
                 child[name] = implementation;
@@ -108,7 +120,7 @@ var base_controller = function(app) {
         //       see: test_base_controller l:112 failing test.
         _.forOwn(binding, function(method, verb) {
             // Only bind valid HTTP verbs.
-            if (_.includes(methods, verb)) {
+            if (_.includes(httpMethods, verb)) {
                 router[verb](route, context.bindContext(method));
             }
         });

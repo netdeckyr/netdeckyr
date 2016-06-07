@@ -7,6 +7,7 @@ const chai      = require('chai'),
       sinonChai = require('sinon-chai'),
       express   = require('express'),
       util      = require('util'),
+      _         = require('lodash'),
       use       = require('rekuire'),
       expect    = chai.expect;
 
@@ -132,26 +133,33 @@ describe('BaseController', function() {
         it('should set up instance and class methods appropriately', function() {
             const testFnRetVal = 10;
             const testClassFnRetVal = 20;
-            const MockController = BaseController.extend(function() {
+
+            const constructor = function() {
                 this._super.call(this);
                 this.mock = 'mock';
-            }, {
+            };
+
+            const instanceMethods = {
                 mockFn: function(request, response) {
                     response.send('hello world');
                 },
                 testFn: function() {
                     return testFnRetVal;
                 }
-            }, {
+            };
+
+            const classMethods = {
                 testClassFn: function() {
                     return testClassFnRetVal;
                 }
-            });
+            };
+
+            const MockController = BaseController.extend(constructor, instanceMethods, classMethods);
 
             expect(MockController).to.have.property('_instanceMethods');
             expect(MockController).to.have.property('_classMethods');
-            expect(MockController._instanceMethods).to.have.length(2);
-            expect(MockController._classMethods).to.have.length(1);
+            expect(MockController._instanceMethods).to.have.length(Object.keys(instanceMethods).length + BaseController._instanceMethods.length);
+            expect(MockController._classMethods).to.have.length(Object.keys(classMethods).length + BaseController._classMethods.length);
         });
     });
 
@@ -192,13 +200,12 @@ describe('BaseController', function() {
             const MockController = BaseController.extend(noop, {
                 testMethod: noop
             }, {
-
             });
 
-            const combinedLength = MockController._instanceMethods.length + BaseController._instanceMethods.length;
-
             var controller = new MockController();
-            expect(controller.instanceMethods()).to.be.length(combinedLength);
+            expect(controller.instanceMethods()).to.be.length(4);
+            expect(_.head(controller.instanceMethods())).to.have.property('name');
+            expect(_.head(controller.instanceMethods())).to.have.property('implementation');
         });
     });
 });
