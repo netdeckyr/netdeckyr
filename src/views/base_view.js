@@ -1,8 +1,7 @@
 // jshint esversion: 6
 
-const _ = require('lodash');
-
-module.exports = function(app) {
+var base_view = function(app) {
+    const _ = app.get('underscore');
     var BaseView = function(response, template) {
         this.response = response;
         this.template = template;
@@ -13,3 +12,5 @@ module.exports = function(app) {
 
     return BaseView;
 };
+
+module.exports = base_view;

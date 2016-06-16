@@ -15,7 +15,7 @@ var page_controller  = function(app) {
     };
 
     PageController.prototype.home = function(request, response) {
-        response.render();
+
     };
 
     return PageController;

@@ -22,6 +22,7 @@ describe('BaseView', function() {
             expect(view).to.be.instanceof(BaseView);
             expect(view).to.have.property('response', mockResponse);
             expect(view).to.have.property('template', mockTemplate);
+            expect(view).to.have.property('render');
             done();
         });
     });
