@@ -187,7 +187,7 @@ gulp.task('build', 'Build the application.', ['lint', 'bower', 'sass'], function
 
     var vendorStream = gulp.src('./bower.json')
     .pipe(bowerFiles())
-    .pipe(gfilter(function(file) { return /.+\.js/.test(file.path) }))
+    .pipe(gfilter(function(file) { return /.+\.js/.test(file.path); }))
     .pipe(logFilesWithMessage('Compressing vendor file:'))
     .pipe(gconcat('vendor.js'))
     .pipe(uglify())
