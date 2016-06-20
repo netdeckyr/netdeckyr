@@ -105,7 +105,9 @@ describe('BaseController', function() {
 
             return Promise.all([
                 supertest(app).get(route + testMethodRoute).expect(200),
-                supertest(app).post(route + testMethodRoute).expect(200)
+                supertest(app).post(route + testMethodRoute).expect(200),
+                supertest(app).del(route + testMethodRoute).expect(404),
+                supertest(app).get('/wrong').expect(404)
             ]);
         });
     });
@@ -186,13 +188,12 @@ describe('BaseController', function() {
             const MockController = BaseController.extend(function() {});
             var controller = new MockController();
 
-            expect(controller.instanceMethods).to.not.be.undefined();
+            expect(controller).to.respondTo('instanceMethods');
         });
 
         it('should return all of the instance methods in the prototype chain', function() {
             const MockController = BaseController.extend(noop, {
                 testMethod: noop
-            }, {
             });
 
             var controller = new MockController();

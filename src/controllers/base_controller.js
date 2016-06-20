@@ -73,7 +73,7 @@ var base_controller = function(app) {
 
     const bindVerbs = function(context, router, route, binding) {
         // TODO: Find out why all verbs are added for the specified route and binding.
-        //       see: test_base_controller l:112 failing test.
+        //       see: test_base_controller l:109 failing test.
         _.forOwn(binding, function(method, verb) {
             // Only bind valid HTTP verbs.
             if (_.includes(httpMethods, verb)) {
