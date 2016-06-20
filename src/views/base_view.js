@@ -9,7 +9,7 @@ var base_view = function(app) {
         this.template = template;
     }, {
         render: function(vars) {
-            return this.response.render(vars);
+            return this.response.render(this.template, vars);
         }
     }, {});
 

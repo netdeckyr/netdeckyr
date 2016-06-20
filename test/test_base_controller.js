@@ -106,7 +106,7 @@ describe('BaseController', function() {
             return Promise.all([
                 supertest(app).get(route + testMethodRoute).expect(200),
                 supertest(app).post(route + testMethodRoute).expect(200),
-                supertest(app).del(route + testMethodRoute).expect(404),
+                supertest(app).head(route + testMethodRoute).expect(404),
                 supertest(app).get('/wrong').expect(404)
             ]);
         });

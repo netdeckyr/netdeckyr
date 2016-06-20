@@ -308,19 +308,26 @@ gulp.task('test', 'Build, migrate, and test the application.', ['build', 'migrat
         default: 'spec',
         type: 'string',
         requiresArg: true
+    })
+    .option('debug-brk', {
+        demand: false,
+        describe: 'Break on start.',
+        type: 'boolean'
     }).argv;
 
     const mocha = require('gulp-spawn-mocha');
     return gulp.src('test/**/*.js', { read: false })
     .pipe(mocha({
-        reporter: args.testsReporter
+        reporter: args.testsReporter,
+        debugBrk: args.debugBrk
     }));
 }, {
     aliases: ['t', 'T'],
     options: {
         'tests-reporter': '[type] Set the test reporter type.',
         'config': '[filename] Set the configuration file to use in the env directory.',
-        'secret': '[filename] Set the secret configuration file to use in the env directory.'
+        'secret': '[filename] Set the secret configuration file to use in the env directory.',
+        'debug-brk': 'Set the debug break mode (break on start)'
     }
 });
 
