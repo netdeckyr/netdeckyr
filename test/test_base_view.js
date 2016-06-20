@@ -22,8 +22,15 @@ describe('BaseView', function() {
             expect(view).to.be.instanceof(BaseView);
             expect(view).to.have.property('response', mockResponse);
             expect(view).to.have.property('template', mockTemplate);
-            expect(view).to.have.property('render');
+            expect(view).to.respondTo('render');
             done();
+        });
+
+        it("should provide an extend method to create subclasses.", function() {
+            expect(BaseView).itself.to.respondTo('extend');
+            const MockView = BaseView.extend(function(value) {
+                this.test = value;
+            });
         });
     });
 });

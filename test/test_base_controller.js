@@ -23,9 +23,7 @@ describe('BaseController', function() {
 
     before(function() {
         TestController = BaseController.extend(function(test) {
-            this._super.call(this);
             this.test = test;
-            this._name = 'test';
         }, {
             testMethod: function(request, response) {
                 response.send(this.test);
@@ -51,11 +49,6 @@ describe('BaseController', function() {
             const controller = new BaseController();
             expect(controller).to.not.be.undefined();
             expect(controller).to.be.instanceof(BaseController);
-        });
-
-        it('should have a _name property set to \'base\'', function() {
-            const controller = new BaseController();
-            expect(controller).to.have.property('_name', 'base');
         });
     });
 
@@ -112,7 +105,7 @@ describe('BaseController', function() {
 
             return Promise.all([
                 supertest(app).get(route + testMethodRoute).expect(200),
-                supertest(app).post(route + testMethodRoute).expect(200),
+                supertest(app).post(route + testMethodRoute).expect(200)
             ]);
         });
     });
@@ -125,10 +118,8 @@ describe('BaseController', function() {
             expect(controller).to.not.be.undefined();
             expect(controller).to.be.instanceof(BaseController);
             expect(controller).to.be.instanceof(TestController);
-            expect(controller).to.have.property('_super', BaseController);
             expect(controller).to.have.property('test', testValue);
-            expect(controller).to.have.property('_name', 'test');
-            expect(controller.testMethod).to.not.be.undefined();
+            expect(controller).to.respondTo('testMethod');
         });
 
         it('should set up instance and class methods appropriately', function() {
@@ -157,10 +148,11 @@ describe('BaseController', function() {
 
             const MockController = BaseController.extend(constructor, instanceMethods, classMethods);
 
-            expect(MockController).to.have.property('_instanceMethods');
-            expect(MockController).to.have.property('_classMethods');
-            expect(MockController._instanceMethods).to.have.length(Object.keys(instanceMethods).length + BaseController._instanceMethods.length);
-            expect(MockController._classMethods).to.have.length(Object.keys(classMethods).length + BaseController._classMethods.length);
+            expect(MockController).itself.to.respondTo('classMethods');
+            expect(MockController).itself.to.respondTo('extend');
+            expect(MockController).itself.to.respondTo('testClassFn');
+            expect(MockController.testClassFn()).to.equal(testClassFnRetVal);
+            expect(MockController.classMethods()).to.have.length(Object.keys(classMethods).length + BaseController.classMethods().length);
         });
     });
 
@@ -205,8 +197,6 @@ describe('BaseController', function() {
 
             var controller = new MockController();
             expect(controller.instanceMethods()).to.be.length(4);
-            expect(_.head(controller.instanceMethods())).to.have.property('name');
-            expect(_.head(controller.instanceMethods())).to.have.property('implementation');
         });
     });
 });

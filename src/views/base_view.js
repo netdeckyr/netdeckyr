@@ -1,14 +1,17 @@
 // jshint esversion: 6
 
 var base_view = function(app) {
-    const _ = app.get('underscore');
-    var BaseView = function(response, template) {
+    const _      = app.get('underscore');
+    const extend = require('extensive');
+
+    var BaseView = extend(function(response, template) {
         this.response = response;
         this.template = template;
-    };
-
-    BaseView.prototype = {
-    };
+    }, {
+        render: function(vars) {
+            return this.response.render(vars);
+        }
+    }, {});
 
     return BaseView;
 };
