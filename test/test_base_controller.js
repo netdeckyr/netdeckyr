@@ -70,9 +70,7 @@ describe('BaseController', function() {
             let params = {};
             params[testParam] = controller.handleTestParam;
 
-            controller.initialize(router, bindings, params);
-
-            app.use(route, router);
+            controller.initialize(route, router, bindings, params);
 
             return supertest(app).get(route + testMethodRoute)
             .expect(200)
@@ -97,11 +95,7 @@ describe('BaseController', function() {
                 'post': controller.testPostMethod
             };
 
-            controller.initialize(router, bindings);
-
-            app.use(route, router);
-
-            expressListRoutes({ prefix: route }, 'API:', router);
+            controller.initialize(route, router, bindings);
 
             return Promise.all([
                 supertest(app).get(route + testMethodRoute).expect(200),

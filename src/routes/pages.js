@@ -9,7 +9,7 @@ var pages = function(app, express) {
     var controller = new PageController();
 
     controller.initialize(router, {
-        // Bindings
+
 
     }, {
         // Variables

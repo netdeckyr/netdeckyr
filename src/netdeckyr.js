@@ -80,7 +80,7 @@ var netdeckyr = function(options) {
     use('passport-init')(passport, use('models/user')(app));
 
     // Setup views
-    app.set('views', path.join(__dirname, 'views'));
+    app.set('views', path.join(__dirname, 'templates'));
     app.set('view engine', 'jade');
 
     // Setup static files
@@ -88,7 +88,7 @@ var netdeckyr = function(options) {
 
 
     // Require routes
-    use('routes')(app, express);
+    use('routes/pages')(app, express);
 
     return app;
 };

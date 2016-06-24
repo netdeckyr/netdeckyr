@@ -30,17 +30,33 @@ var base_controller = function(app) {
          * @method initialize
          *
          * @desc Sets up the router with the passed in http verb bindings and
-         *  parameter middleware functions.
+         *  parameter middleware functions, and mounts it on the app at the specified route.
          *
+         * @param {string}                      [route]    the base route for the router
          * @param {Object}                      router   an express.js router
          * @param {Object<string, function>}    bindings a collection of http verbs
          *  and route functions to run for each.
-         * @param {Object<string, function>}    params   a collection of parameter
+         * @param {Object<string, function>}    [params]   a collection of parameter
          *  names and parameter middleware functions to attach to the router.
          */
-        initialize: function(router, bindings, params) {
+        initialize: function(route, router, bindings, params) {
+            // Handle parameter rebinding
+            if (typeof route !== 'string') {
+                params = bindings;
+                bindings = router;
+                router = route;
+                route = undefined;
+            }
+
             setupBindings(this, router, bindings);
             setupParams(this, router, params);
+
+            // If a route was provided, mount the router at the route. Otherwise, mount the router at the root.
+            if (route) {
+                app.use(route, router);
+            } else {
+                app.use(router);
+            }
         },
 
         instanceMethods: function() {

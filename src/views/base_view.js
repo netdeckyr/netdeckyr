@@ -10,8 +10,19 @@ var base_view = function(app) {
     }, {
         render: function(vars) {
             return this.response.render(this.template, vars);
+        },
+        helpers: {
+            pageLink: function(name) {
+                return `page/${name}`;
+            },
+            
+            linkTo: function(name) {
+                return `/${name}`;
+            }
         }
-    }, {});
+    }, {
+        app: app
+    });
 
     return BaseView;
 };

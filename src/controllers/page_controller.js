@@ -14,6 +14,8 @@ var page_controller  = function(app) {
 
     const use = require('rekuire');
     const BaseController = use('base_controller')(app);
+    const View           = use('base_view')(app);
+
 
     const PageController = BaseController.extend(function() {
         BaseController.call(this);
@@ -21,7 +23,7 @@ var page_controller  = function(app) {
     });
 
     PageController.prototype.index = function(request, response) {
-
+        let index = new View(response, 'main');
     };
 
     PageController.prototype.home = function(request, response) {

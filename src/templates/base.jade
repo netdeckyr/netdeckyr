@@ -1,4 +1,4 @@
-doctype 5
+doctype html
 html.no-js(lang='en')
     head
         block head
@@ -6,8 +6,8 @@ html.no-js(lang='en')
             meta(http-equiv='X-UA-Compatible', content='ID=edge')
             meta(name='description', content='#{meta.description}')
             meta(name='viewport', content='width=device-width, initial-scale=1')
-            
-            title= Netdeckyr - #{meta.title}
+
+            title Netdeckyr - #{meta.title}
         
         block css
             link(rel='stylesheet', href='vendor/stylesheets/normalize.css')
@@ -22,12 +22,12 @@ html.no-js(lang='en')
         <![endif]-->
         
         block navigation
-            include ./partials/_base_navigation.jade
+            include partials/_base_navigation
         
         block content
         
         block footer
-            include ./partials/_base_footer.jade
+            include partials/_base_footer
         
         block javascript
             script(src='vendor/scripts/jquery.min.js')
