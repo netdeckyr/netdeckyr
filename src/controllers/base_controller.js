@@ -55,11 +55,11 @@ var base_controller = function(app) {
             setupBindings(this, router, routes);
             setupParams(this, router, params);
 
-            // If a route was provided, mount the router at the route. Otherwise, mount the router at the root.
+            // If a base was provided, mount the router at the base. Otherwise, mount the router at the root.
             if (base) {
-                mountRouter(route.replace('/', ''), route, router);
+                mountRouter(base.replace('/', ''), base, router);
             } else {
-                mountRouter('', route, router);
+                mountRouter('', '/', router);
             }
         },
 
