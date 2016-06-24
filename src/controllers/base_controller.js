@@ -10,12 +10,14 @@
  * @requires    lodash
  * @requires    methods
  * @requires    extensive
+ * @requires    named-routes
  */
 var base_controller = function(app) {
 
     const _           = require('lodash');
     const httpMethods = require('methods');
     const extend      = require('extensive');
+    const NamedRoute = require('named-routes');
 
     /**
      * @class       BaseController
@@ -29,7 +31,7 @@ var base_controller = function(app) {
         /**
          * @method initialize
          *
-         * @desc Sets up the router with the passed in http verb bindings and
+         * @desc Extends the router with named-routes, sets it up with the passed in http verb bindings and
          *  parameter middleware functions, and mounts it on the app at the specified route.
          *
          * @param {string}                      [route]    the base route for the router
@@ -39,23 +41,25 @@ var base_controller = function(app) {
          * @param {Object<string, function>}    [params]   a collection of parameter
          *  names and parameter middleware functions to attach to the router.
          */
-        initialize: function(route, router, bindings, params) {
+        initialize: function(base, router, routes, params) {
             // Handle parameter rebinding
-            if (typeof route !== 'string') {
-                params = bindings;
-                bindings = router;
-                router = route;
-                route = undefined;
+            if (typeof base !== 'string') {
+                params = routes;
+                routes = router;
+                router = base;
+                base = undefined;
             }
 
-            setupBindings(this, router, bindings);
+            new NamedRoute().extendExpress(router);
+
+            setupBindings(this, router, routes);
             setupParams(this, router, params);
 
             // If a route was provided, mount the router at the route. Otherwise, mount the router at the root.
-            if (route) {
-                app.use(route, router);
+            if (base) {
+                mountRouter(route.replace('/', ''), route, router);
             } else {
-                app.use(router);
+                mountRouter('', route, router);
             }
         },
 
@@ -102,6 +106,18 @@ var base_controller = function(app) {
         _.forOwn(params, function(method, param) {
             router.param(param, context.bindContext(method));
         });
+    };
+
+    const mountRouter = function(name, route, router) {
+        app.use(route, router);
+
+        if (app.locals.routers) {
+            app.locals.routers[name] = router;
+        } else {
+            let routers = {};
+            routers[name] = router;
+            app.locals.routers = routers;
+        }
     };
 
     return BaseController;
