@@ -24,6 +24,7 @@ var page_controller  = function(app) {
 
     PageController.prototype.index = function(request, response) {
         let index = new View(response, 'main');
+        return index.render({});
     };
 
     PageController.prototype.home = function(request, response) {
