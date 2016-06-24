@@ -8,24 +8,25 @@ const bcrypt    = require('bcrypt');
 const use       = require('rekuire');
 const app       = use('netdeckyr')({ squelch: true });
 const User      = use('user')(app);
+const bookshelf = app.locals.bookshelf;
 
 describe('User', function() {
     beforeEach(function(done) {
         // Clear the users database
-        app.get('bookshelf').knex('users').del().then(function() {
+        bookshelf.knex('users').del().then(function() {
             done();
         });
     });
 
     after(function(done) {
         // Destroy the knex instance
-        app.get('bookshelf').knex.destroy();
+        bookshelf.knex.destroy();
         done();
     });
 
     describe('#initialize()', function() {
         beforeEach(function(done) {
-            app.get('bookshelf').knex('users').del().then(function() {
+            bookshelf.knex('users').del().then(function() {
                 done();
             });
         });

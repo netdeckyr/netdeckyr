@@ -21,10 +21,10 @@ var netdeckyr = function(options) {
     var app = express();
 
     // Save library references
-    app.set('underscore', _);
-    app.set('debug', debug);
-    app.set('bcrypt', bcrypt);
-    app.set('chalk', chalk);
+    app.locals._ = _;
+    app.locals.debug = debug;
+    app.locals.bcrypt = bcrypt;
+    app.locals.chalk = chalk;
 
     var winstonTimestamp = function() {
         return `[${ chalk.gray(moment().format('HH:mm:ss')) }]`;
@@ -41,7 +41,7 @@ var netdeckyr = function(options) {
         ]
     });
 
-    app.set('winston', logger);
+    app.locals.winston = logger;
 
     // Initialize DB
     logger.info(`Setting up '${ chalk.cyan('knex') }' with environment ${ process.env.CONFIGURATION_ENV }.`);
@@ -56,7 +56,7 @@ var netdeckyr = function(options) {
 
     var bookshelf = require('bookshelf')(knex);
     bookshelf.plugin('registry');
-    app.set('bookshelf', bookshelf);
+    app.locals.bookshelf = bookshelf;
 
     // Set up middleware
     app.use(bodyParser.json());
@@ -76,7 +76,7 @@ var netdeckyr = function(options) {
     // Setup passport
     app.use(passport.initialize());
     app.use(passport.session());
-    app.set('passport', passport);
+    app.locals.passport = passport;
     use('passport-init')(passport, use('models/user')(app));
 
     // Setup views

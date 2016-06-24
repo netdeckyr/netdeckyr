@@ -2,10 +2,10 @@
 
 module.exports = function(app) {
     var Promise   = require('bluebird');
-    var bookshelf = app.get('bookshelf');
-    var bcrypt    = app.get('bcrypt');
-    var _         = app.get('underscore');
-    var debug     = app.get('debug');
+    var bookshelf = app.locals.bookshelf;
+    var bcrypt    = app.locals.bcrypt;
+    var _         = app.locals._;
+    var debug     = app.locals.debug;
 
     var User = bookshelf.Model.extend({
         tableName: 'users',
